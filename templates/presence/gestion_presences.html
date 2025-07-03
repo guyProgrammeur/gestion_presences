@@ -1,0 +1,63 @@
+{% extends "presence/base.html" %}
+{% load presence_extras %}
+
+{% block extra_css %}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="page-title">Présences du {{ date_selectionnee }}</h1>
+
+    <form method="get" class="filter-form">
+        <input type="date" name="date" value="{{ date_selectionnee }}" class="filter-input">
+        
+        <input type="text" name="q" placeholder="Rechercher par nom" value="{{ q_nom }}" class="filter-input">
+
+        <select name="departement" class="filter-select">
+            <option value="">-- Tous les Services et Divisions --</option>
+            {% for d in departements %}
+                <option value="{{ d.id }}" {% if departement_id|default:'' == d.id|stringformat:"s" %}selected{% endif %}>
+                    {{ d.nom }}
+                </option>
+            {% endfor %}
+        </select>
+
+        <button type="submit" class="filter-button">Filtrer</button>
+    </form>
+
+    <table class="presence-table">
+        <thead>
+            <tr>
+                <th>N°</th>
+                <th>Agent</th>
+                <th>Statut</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+           {% for agent in page_obj %}
+                {% with p=presences_map|get_item:agent.id %}
+                    <tr>
+                        <td>{{ forloop.counter0|add:page_obj.start_index|add:"-1" }}</td>
+                        <td>{{ agent.nom_complet }}</td>
+                        <td class="{% if not p %}status-absent{% elif p.statut == 'P' %}status-present{% elif p.statut == 'L' %}status-late{% endif %}">
+                            {% if p %}
+                                {{ p|call_attr:"get_statut_display" }}
+                            {% else %}
+                                Absent
+                            {% endif %}
+                        </td>
+                        <td>
+                            <form method="post" class="action-form">
+                                {% csrf_token %}
+                                <input type="hidden" name="agent_id" value="{{ agent.id }}">
+                                <button name="statut" value="P" class="action-button present-button">Présent</button>
+                                <button name="statut" value="A" class="action-button absent-button">Absent</button>
+                            </form>
+                        </td>
+                    </tr>
+                {% endwith %}
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

@@ -1,0 +1,45 @@
+{% extends "presence/base.html" %}
+
+{% block extra_css %}{% endblock %}
+
+{% block content %}
+<div class="report-container">
+    <h1 class="report-title">📄 Générer un rapport mensuel</h1>
+
+    <form method="post" class="report-form">
+        {% csrf_token %}
+
+        <div class="form-group">
+            <label for="{{ form.mois.id_for_label }}" class="form-label">Mois :</label>
+            <select name="{{ form.mois.name }}" id="{{ form.mois.id_for_label }}" class="form-select">
+                {% for val, label in form.mois.field.choices %}
+                    <option value="{{ val }}"{% if form.mois.value == val %} selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="{{ form.annee.id_for_label }}" class="form-label">Année :</label>
+            <select name="{{ form.annee.name }}" id="{{ form.annee.id_for_label }}" class="form-select">
+                {% for val, label in form.annee.field.choices %}
+                    <option value="{{ val }}"{% if form.annee.value == val %} selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="button-group">
+            <button formaction="{% url 'presence:generer_rapport' %}"
+                    class="report-button button-primary">
+                 Rapport Mensuel Condesé 
+            </button>
+            <button type="submit" formaction="{% url 'presence:rapport_paysage_apercu' %}" formmethod="post" class="report-button button-preview button-secondary">
+                Aperçu avant Impression
+            </button>
+            <button formaction="{% url 'presence:rapport_paysage' %}"
+                    class="report-button button-secondary">
+                📄 Rapport de Presences élargi
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

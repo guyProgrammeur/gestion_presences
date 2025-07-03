@@ -1,0 +1,75 @@
+{% extends "presence/base.html" %}
+
+{% block extra_css %}{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <h2 class="dashboard-title">Tableau de Bord</h2>
+    
+    <div class="stats-grid">
+        <!-- Statistiques -->
+        <div class="stat-card stat-card-blue">
+            <h3 class="stat-title text-blue-800">Présences ce mois</h3>
+            <p class="stat-value">{{ stats.presents }}</p>
+        </div>
+        
+        <div class="stat-card stat-card-green">
+            <h3 class="stat-title text-green-800">Total Agents</h3>
+            <p class="stat-value">{{ nombreAgents }}</p>
+        </div>
+        
+        <div class="stat-card stat-card-red">
+            <h3 class="stat-title text-red-800">Absences ce mois</h3>
+            <p class="stat-value">{{ stats.absents }}</p>
+        </div>
+    </div>
+    
+    <!-- Présences aujourd'hui -->
+    <div class="presence-section">
+        <h3 class="section-title">Présences aujourd'hui ({{ aujourd_hui|date:"d/m/Y" }})</h3>
+        
+        {% if presences_auj %}
+        <div class="table-container">
+            <table class="presence-table">
+                <thead>
+                    <tr>
+                        <th>Agent</th>
+                        <th>Statut</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in presences_auj %}
+                    <tr>
+                        <td>
+                            <a href="{% url 'presence:details_agent' item.agent.id %}" class="agent-link">
+                                {{ item.agent.nom_complet }}
+                            </a>
+                        </td>
+                        <td>
+                            <span class="badge badge-male">Présences : {{ item.total_presence }}</span>
+                            <span class="badge badge-female">Absences : {{ item.total_absence }}</span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="empty-message">Aucune présence enregistrée aujourd'hui.</p>
+        {% endif %}
+    </div>
+    
+    <!-- Actions rapides -->
+    <div class="quick-actions">
+        <a href="{% url 'presence:gestion_presences' %}" class="action-btn action-btn-blue">
+            Gérer les présences
+        </a>
+        <a href="{% url 'presence:generer_rapport' %}" class="action-btn action-btn-green">
+            Générer rapport
+        </a>
+        <a href="{% url 'presence:liste_agents' %}" class="action-btn action-btn-indigo">
+            Liste des agents
+        </a>
+    </div>
+</div>
+{% endblock %}

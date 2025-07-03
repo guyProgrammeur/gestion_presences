@@ -1,0 +1,144 @@
+{% if apercu %}
+    <a href="{% url 'presence:generer_rapport' %}" class="report-button btn-secondary">Retour</a>
+{% endif %}
+
+{% comment %} fichier : templates/presence/partials/_rapport_paysage.html {% endcomment %}
+
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+   
+
+    <style>
+        @page {
+            size: A4 landscape;
+            margin: 1.5cm;
+        }
+        @page:last {
+            @bottom-center {
+                content: "Page " counter(page) " sur " counter(pages);
+                font-size: 9pt;
+            }
+        }
+        body {
+            font-family: 'DejaVu Sans', sans-serif;
+            font-size: 10pt;
+        }
+        header {
+            display: block;
+            align-items: center;
+            text-align: center;
+            justify-content: space-between;
+            margin-bottom: 1.5em;
+        }
+        .logo {
+            text-align: center;
+            width: 80px;
+            height: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1em;
+            font-size: 8pt;
+        }
+        th, td {
+            border: 1px solid #222222;
+            padding: 2px 3px;
+            text-align: center;
+        }
+        th {
+            background-color: #c0ddff;
+        }
+         .signature-section {
+            margin-top: 30px;
+            display: flex;
+            
+            justify-content: center;
+        }
+        
+        .signature-line {
+            width: 160px;
+            border-top: 1px solid #333;
+            text-align: center;
+            padding-top: 5px;
+            font-size: 9pt;
+        }
+        .btn-secondary {
+            background-color: #e5e7eb;
+            color: #374151;
+        }
+        .btn-secondary:hover {
+            background-color: #d1d5db;
+        }
+    </style>
+</head>
+<body>
+    <header style=" text-align: center;">
+        {% if premiere_page %}
+
+            {% if logo_path and not apercu %}
+                <img src="{{ logo_path }}" alt="Logo" class="logo"><br>
+            {% endif %}
+            <h5 style="margin: 0;">
+                SECRÉTARIAT GÉNÉRAL AU NUMÉRIQUE 
+            </h5>
+            <br>
+            <h1 style="font-style: italic; text-decoration: underline 0.5px; font-family: 'Edwardian Script ITC', 'Old English Text MT', 'Garamond', 'Times New Roman', serif; margin: 0;">
+                Direction Applicatifs et Contenus Numeriques
+            </h1>
+        {% endif %}
+    </header>
+
+    <h4 style="text-transform: uppercase;">FICHE DE PRESENCES DU MOIS DE {{  mois_nom }} {{ annee }}</h4>
+    <table>
+        <thead>
+            <tr>
+                <th>N°</th>
+                <th>Nom & Postnom</th>
+                <th>Matricule</th>
+                <th>Grade</th>
+                <th>Sexe</th>
+                <th>Div/Sv</th>
+                {% for j in jours_ouvrables %}
+                    <th>{{ j }}</th>
+                {% endfor %}
+                <th>JRS <br> OUV</th>
+                <th>NP</th>
+                <th>NA</th>
+                <th>OBS</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for ligne in lignes %}
+                <tr>
+                    <td>{{ ligne.numero }}</td>
+                    <td style="text-align: left;">{{ ligne.nom }}</td>
+                    <td>{{ ligne.matricule }}</td>
+                    <td>{{ ligne.grade }}</td>
+                    <td>{{ ligne.sexe }}</td>
+                    <td>{{ ligne.departement }}</td>
+                    {% for statut in ligne.jours %}
+                        <td>{{ statut }}</td>
+                    {% endfor %}
+                    <td>{{ ligne.jours_ouvrables }}</td>
+                    <td>{{ ligne.np }}</td>
+                    <td>{{ ligne.na }}</td>
+                    <td>{{ ligne.remarque }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="signature-section" style="justify-content: center; text-align: center;">
+        <div>
+            <h5 style="margin-bottom: 5px;">Olga KAVIRA KINYAMUSITU</h5>
+            <div class="signature-line">
+                Directeur - Chef de Service
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,24 @@
+# Ignorer les dossiers de build
+build/
+dist/
+__pycache__/
+*.spec
+
+# Ignorer PyInstaller, fichiers exécutables
+*.exe
+*.dll
+*.so
+
+# Ignorer le dossier gtk3
+gtk3/
+
+# Ignorer les données personnelles éventuelles
+*.log
+*.db
+.env
+*.pyc
+*.pyo
+
+# Ignorer les fichiers de config système
+.DS_Store
+Thumbs.db

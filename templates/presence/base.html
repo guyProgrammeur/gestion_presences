@@ -1,0 +1,39 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Gestion des Présences{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <nav class="main-nav">
+        <div class="nav-container">
+            <h1 class="nav-title">Gestion des Présences</h1>
+            <div class="nav-links">
+                <a href="{% url 'presence:dashboard' %}" class="nav-link nav-link-primary">
+                    Accueil
+                </a>
+                <a href="{% url 'accounts:logout' %}" class="nav-link nav-link-secondary">
+                    Déconnexion
+                </a>
+                <span class="username">COMPTE : {{ request.user.username }}</span>
+            </div>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="main-footer">
+        <div class="footer-container">
+            <p>© {% now "Y" %} - Tous droits réservés</p>
+        </div>
+    </footer>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,209 @@
+{% extends "presence/base.html" %}
+
+{% block extra_css %}
+<style>
+    /* Styles généraux */
+    .card {
+        background-color: #ffffff;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        padding: 2rem;
+        max-width: 800px;
+        margin: 2rem auto;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    h2 {
+        color: #2d3748;
+        font-size: 1.8rem;
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid #e2e8f0;
+    }
+
+    h3 {
+        color: #2d3748;
+        font-size: 1.4rem;
+        margin: 1.5rem 0 1rem;
+    }
+
+    /* Badges */
+    .badge {
+        display: inline-block;
+        padding: 0.35rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        margin-right: 0.5rem;
+    }
+
+    .badge-male {
+        background-color: #10b981;
+        color: white;
+    }
+
+    .badge-female {
+        background-color: #ef4444;
+        color: white;
+    }
+
+    /* Informations agent */
+    .agent-info {
+        margin-bottom: 1.5rem;
+    }
+
+    .agent-info p {
+        margin: 0.5rem 0;
+        color: #4a5568;
+    }
+
+    .agent-info strong {
+        color: #2d3748;
+        min-width: 120px;
+        display: inline-block;
+    }
+
+    /* Tableau */
+    .data-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1.5rem 0;
+    }
+
+    .data-table th,
+    .data-table td {
+        padding: 0.75rem 1rem;
+        text-align: left;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .data-table th {
+        background-color: #f7fafc;
+        color: #4a5568;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.8rem;
+    }
+
+    .data-table tr:hover td {
+        background-color: #f8f9fa;
+    }
+
+    /* Bouton */
+    .btn {
+        display: inline-block;
+        padding: 0.6rem 1.2rem;
+        background-color: #4a5568;
+        color: white;
+        text-decoration: none;
+        border-radius: 4px;
+        font-weight: 500;
+        transition: background-color 0.2s;
+        margin-top: 1rem;
+    }
+
+    .btn:hover {
+        background-color: #2d3748;
+    }
+
+    .btn-secondary {
+        background-color: #718096;
+    }
+
+    .btn-secondary:hover {
+        background-color: #4a5568;
+    }
+
+    /* Message vide */
+    .empty-message {
+        color: #718096;
+        font-style: italic;
+        text-align: center;
+        padding: 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>Détails de l'agent : {{ agent.nom_complet }}</h2>
+    
+    <div class="agent-stats">
+        <span class="badge badge-male">Présences : {{ total_presence }}</span>
+        <span class="badge badge-female">Absences : {{ total_absence }}</span>
+    </div>
+
+    <div class="agent-info">
+        <p><strong>Matricule :</strong> {{ agent.matricule }}</p>
+        <p><strong>Divisions et Bureaux :</strong> {{ agent.Division_Bureau.nom }}</p>
+        <p><strong>Grade :</strong> {{ agent.grade }}</p>
+        <p><strong>Sexe :</strong> 
+            {% if agent.sexe == 'M' %}
+                <span class="badge badge-male">Masculin</span>
+            {% else %}
+                <span class="badge badge-female">Féminin</span>
+            {% endif %}
+        </p>
+    </div>
+
+       <!-- ...avant... -->
+    <form method="get" class="modern-form" style="display: flex; gap: 1rem; align-items: center; margin-bottom: 1.5em;">
+        <input type="date" name="date" value="{{ date_query }}" class="modern-input" style="padding: 0.5rem 1rem; border: 1px solid #e2e8f0; border-radius: 4px; font-size: 1rem;"/>
+        <button type="submit" class="btn btn-secondary" style="margin: 0;">Rechercher</button>
+    </form>
+    <style>
+        .modern-form input[type="date"]:focus {
+            outline: none;
+            border-color: #4a90e2;
+            box-shadow: 0 0 0 2px #b3d4fc;
+        }
+        .modern-form .btn {
+            margin-top: 0;
+        }
+    </style>
+    
+    <h3>Présences et absences</h3>
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Statut</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for presence in page_obj %}
+            <tr>
+                <td>{{ presence.date|date:"d/m/Y" }}</td>
+                <td>
+                    {% if presence.statut == 'P' %}
+                        <span class="badge badge-male">Présent</span>
+                    {% elif presence.statut == 'A' %}
+                        <span class="badge badge-female">Absent</span>
+                    {% else %}
+                        {{ presence.statut }}
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="2" class="empty-message">Aucune donnée de présence trouvée.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+    <!-- Pagination -->
+    <div class="pagination">
+        {% if page_obj.has_previous %}
+            <a href="?{% if date_query %}date={{ date_query }}&{% endif %}page={{ page_obj.previous_page_number }}" class="btn btn-secondary">Précédent</a>
+        {% endif %}
+        <span>Page {{ page_obj.number }} sur {{ page_obj.paginator.num_pages }}</span>
+        {% if page_obj.has_next %}
+            <a href="?{% if date_query %}date={{ date_query }}&{% endif %}page={{ page_obj.next_page_number }}" class="btn btn-secondary">Suivant</a>
+        {% endif %}
+    </div>
+    <!-- ...après... -->
+    
+    <a href="{% url 'presence:liste_agents' %}" class="btn btn-secondary">Retour à la liste</a>
+</div>
+{% endblock %}

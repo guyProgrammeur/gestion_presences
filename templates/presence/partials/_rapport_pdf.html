@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Rapport des Présences {{ mois_nom }} {{ annee }}</title>
+    <style>
+        @page {
+            @top-left {
+                content: element(header);
+            }
+        }
+        header {
+            display: block;
+            align-items: center;
+            text-align: center;
+            justify-content: space-between;
+            margin-bottom: 1.5em;
+        }
+
+        .header {
+            position: running(header);
+            width: 100%;
+            border-bottom: 2px solid #1e3a8a;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .institution-header {
+            display: flex;
+            align-items: center;
+        }
+        
+        .institution-logo {
+            height: 60px;
+            margin-right: 15px;
+        }
+        .logo {
+            text-align: center;
+            width: 80px;
+            height: auto;
+        }
+        
+        .institution-info {
+            flex-grow: 1;
+        }
+        
+        .institution-name {
+            font-size: 16pt;
+            font-weight: bold;
+            color: #1e3a8a;
+            margin: 0;
+        }
+        
+        .report-title {
+            text-align: center;
+            font-size: 14pt;
+            font-weight: bold;
+            margin: 15px 0;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            font-size: 9pt;
+        }
+        
+        th {
+            background-color: #1e3a8a;
+            color: white;
+            padding: 6px;
+            text-align: left;
+        }
+        
+        td {
+            padding: 6px;
+            border-bottom: 1px solid #ddd;
+        }
+        
+         .signature-section {
+            margin-top: 30px;
+            display: flex;
+            
+            justify-content: center;
+        }
+        .signature-section h2 {
+            margin: 0;
+            font-size: 11pt;
+            text-align: center;
+        }
+        
+        .signature-line {
+            width: 160px;
+            border-top: 1px solid #333;
+            text-align: center;
+            padding-top: 5px;
+            font-size: 9pt;
+        }
+        
+        .footer {
+            font-size: 8pt;
+            text-align: center;
+            margin-top: 20px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <header style=" text-align: center; line-height: 8px; ">
+        {% if premiere_page %}
+
+            {% if logo_path and not apercu %}
+                <img src="{{ logo_path }}" alt="Logo" class="logo"><br>
+            {% endif %}
+            <h5 style="margin: 0;">
+                SECRÉTARIAT GÉNÉRAL AU NUMÉRIQUE 
+            </h5>
+            <br>
+            <h1 style="font-style: italic; text-decoration: underline 0.5px; font-family: 'Edwardian Script ITC', 'Old English Text MT', 'Garamond', 'Times New Roman', serif; margin: 0;">
+                Direction Applicatifs et Contenus Numeriques
+            </h1>
+        {% endif %}
+    </header>
+
+    <h2 class="report-title">RAPPORT DES PRESENCES - {{ mois_nom }} {{ annee }}</h2>
+
+    <table>
+        <thead>
+            <tr>
+                <th>NOM & POSTNOM</th>
+                <th>MATRICULE</th>
+                <th>GRADE</th>
+                <th>PRESENCES</th>
+                <th>ABSENCES</th>
+                <th>RETARDS</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for donnee in agents %}
+            <tr>
+                <td>{{ donnee.agent.nom_complet }}</td>
+                <td>{{ donnee.agent.matricule }}</td>
+                <td>{{ donnee.agent.grade }}</td>
+                <td>{{ donnee.presences }}</td>
+                <td>{{ donnee.absences }}</td>
+                <td>{{ donnee.retards }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+   <div class="signature-section" style="justify-content: center; text-align: center;">
+        <div>
+            <h5 style="margin-bottom: 5px;">Olga KAVIRA KINYAMUSITU</h5>
+            <div class="signature-line">
+                Directeur - Chef de Service
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        Généré le {{ date_generation }} - Système de Gestion des Présences
+    </div>
+</body>
+</html>
