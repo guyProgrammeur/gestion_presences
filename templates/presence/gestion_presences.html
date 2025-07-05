@@ -7,21 +7,50 @@
 <div class="container">
     <h1 class="page-title">Présences du {{ date_selectionnee }}</h1>
 
-    <form method="get" class="filter-form">
-        <input type="date" name="date" value="{{ date_selectionnee }}" class="filter-input">
+    <form method="get" class="filter-form" style="display: flex; flex-wrap: wrap; align-items: center; gap: 16px; margin-bottom: 24px; background: #f9f9f9; padding: 18px 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.03);">
+        <input type="date" name="date" value="{{ date_selectionnee }}" class="filter-input custom-input" style="min-width: 170px;">
         
-        <input type="text" name="q" placeholder="Rechercher par nom" value="{{ q_nom }}" class="filter-input">
+        <input type="text" name="q" placeholder="Rechercher par nom" value="{{ q_nom }}" class="filter-input custom-input" style="min-width: 200px;">
 
-        <select name="departement" class="filter-select">
-            <option value="">-- Tous les Services et Divisions --</option>
-            {% for d in departements %}
-                <option value="{{ d.id }}" {% if departement_id|default:'' == d.id|stringformat:"s" %}selected{% endif %}>
-                    {{ d.nom }}
-                </option>
+        <select name="division" id="division-select" class="filter-input custom-select">
+            <option value="">-- Toutes les divisions --</option>
+            {% for d in divisions %}
+            <option value="{{ d.id }}" {% if d.id|stringformat:"s" == division_id %}selected{% endif %}>
+                {{ d.nom }}
+            </option>
             {% endfor %}
         </select>
 
-        <button type="submit" class="filter-button">Filtrer</button>
+        <select name="bureau" id="bureau-select" class="filter-input custom-select">
+            <option value="">-- Tous les bureaux --</option>
+            {% for b in bureaux %}
+            <option value="{{ b.id }}" data-division="{{ b.division.id }}"
+                {% if b.id|stringformat:"s" == bureau_id %}selected{% endif %}>
+                {{ b.nom }}
+            </option>
+            {% endfor %}
+        </select>
+
+        <button type="submit" class="filter-button" style="padding: 8px 22px; background: #007bff; color: #fff; border: none; border-radius: 4px; font-size: 1rem; cursor: pointer; transition: background 0.2s;">Filtrer</button>
+        <style>
+            .custom-select, .custom-input {
+                padding: 8px 12px;
+                border: 1px solid #ccc;
+                border-radius: 4px;
+                background: #fff;
+                font-size: 1rem;
+                transition: border-color 0.2s;
+            }
+            .custom-select:focus, .custom-input:focus {
+                border-color: #007bff;
+                outline: none;
+                box-shadow: 0 0 0 2px rgba(0,123,255,0.1);
+            }
+           
+            .filter-button:hover {
+                background: #0056b3;
+            }
+        </style>
     </form>
 
     <table class="presence-table">
@@ -59,5 +88,27 @@
             {% endfor %}
         </tbody>
     </table>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const divisionSelect = document.getElementById('division-select');
+            const bureauSelect = document.getElementById('bureau-select');
+
+            function filterBureaux() {
+                const selectedDivision = divisionSelect.value;
+                bureauSelect.querySelectorAll('option').forEach(opt => {
+                    const divId = opt.getAttribute('data-division');
+                    if (!divId || selectedDivision === "" || divId === selectedDivision) {
+                        opt.hidden = false;
+                    } else {
+                        opt.hidden = true;
+                        if (opt.selected) opt.selected = false;
+                    }
+                });
+            }
+
+            divisionSelect.addEventListener('change', filterBureaux);
+            filterBureaux();
+        });
+    </script>
 </div>
 {% endblock %}

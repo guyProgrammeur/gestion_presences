@@ -1,3 +1,4 @@
+from pyexpat.errors import messages
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse, HttpResponse
@@ -7,13 +8,12 @@ from django.core.paginator import Paginator
 from django.template.loader import render_to_string
 from django.conf import settings
 
-from .models import Agent, Presence, Institution, DivisionEtBureau
+from .models import Agent, Bureau, Presence, Institution, Division
 from .forms import RapportForm
 
 import datetime
 from weasyprint import HTML, CSS
 
-@login_required
 @login_required
 def dashboard(request):
     aujourd_hui = timezone.now().date()
@@ -68,19 +68,24 @@ def gestion_presences(request):
 
     # Filtres
     q_nom = request.GET.get('q', '')
-    departement_id = request.GET.get('departement', '')
+    division_id = request.GET.get('division', '')
+    bureau_id = request.GET.get('bureau', '')
 
     agents_query = Agent.objects.all()
 
     if q_nom:
-        agents_query = agents_query.filter(
-            Q(nom__icontains=q_nom) | Q(postnom__icontains=q_nom)
-        )
+        agents_query = agents_query.filter(Q(nom__icontains=q_nom) | Q(postnom__icontains=q_nom)| Q(prenom__icontains=q_nom))
 
-    if departement_id:
-        agents_query = agents_query.filter(Division_Bureau_id=departement_id)
+    if division_id:
+        agents_query = agents_query.filter(bureau__division_id=division_id)
 
-    agents_query = agents_query.order_by('nom', 'postnom')
+    if bureau_id:
+        agents_query = agents_query.filter(bureau_id=bureau_id)
+
+
+    divisions = Division.objects.all()
+    bureaux = Bureau.objects.select_related('division').all()
+    agents_query = agents_query.order_by('nom', 'postnom', 'prenom')
 
     paginator = Paginator(agents_query, 20)  # 20 agents par page
     page_number = request.GET.get('page')
@@ -100,51 +105,52 @@ def gestion_presences(request):
             )
             presences_map[agent.id] = p
 
-    departements = DivisionEtBureau.objects.all()
-
+    # Préparation du contexte pour le template
     return render(request, 'presence/gestion_presences.html', {
         'page_obj': page_obj,
         'presences_map': presences_map,
         'date_selectionnee': date_selectionnee,
         'q_nom': q_nom,
-        'departement_id': departement_id,
-        'departements': departements
+        'division_id': division_id,
+        'bureau_id': bureau_id,
+        'divisions': divisions,
+        'bureaux': bureaux
     })
 
 
-
+@login_required
 def liste_agents(request):
-    # Récupérer les paramètres de recherche et filtre
     search_query = request.GET.get('search', '')
-    departement_id = request.GET.get('departement', None)
-    
-    # Construire la queryset de base
-    agents = Agent.objects.select_related('Division_Bureau').order_by('nom', 'postnom')
-    
-    # Appliquer les filtres
+    bureau_id = request.GET.get('bureau')
+    division_id = request.GET.get('division')
+
+    agents = Agent.objects.select_related('bureau', 'division', 'direction').order_by('nom', 'postnom','prenom')
+
     if search_query:
         agents = agents.filter(
-            Q(nom__icontains=search_query) | 
+            Q(nom__icontains=search_query) |
             Q(postnom__icontains=search_query) |
+            Q(prenom__icontains=search_query) |
             Q(matricule__icontains=search_query)
         )
+
+    if bureau_id and bureau_id != 'all':
+        agents = agents.filter(bureau_id=bureau_id)
     
-    if departement_id and departement_id != 'all':
-        agents = agents.filter(Division_Bureau_id=departement_id)
-    
-    # Pagination - 10 agents par page
+    if division_id and division_id != 'all':
+        agents = agents.filter(division_id=division_id)
+
     paginator = Paginator(agents, 10)
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
-    
-    # Contexte pour le template
+    page_obj = paginator.get_page(request.GET.get('page'))
+
     context = {
         'page_obj': page_obj,
-        'departements': DivisionEtBureau.objects.all(),
-        'selected_departement': departement_id,
+        'divisions': Division.objects.all(),
+        'bureaux': Bureau.objects.select_related('division').all(),
+        'selected_bureau': bureau_id,
+        'selected_division': division_id,
         'search_query': search_query,
     }
-    
     return render(request, 'presence/liste_agents.html', context)
 
 @login_required
@@ -160,10 +166,6 @@ def generer_rapport(request):
         form = RapportForm()
     
     return render(request, 'presence/generer_rapport.html', {'form': form})
-
-
-#from .utils import generer_pdf_rapport_paysage  # si tu mets la fonction ailleurs
-
 
 @login_required
 def rapport_paysage_view(request):
@@ -208,7 +210,7 @@ def rapport_paysage_apercu(request):
                     'matricule': agent.matricule,
                     'grade': agent.grade,
                     'sexe': agent.sexe,
-                    'departement': agent.Division_Bureau.nom,
+                    'departement': agent.rattachement_abrege,
                     'jours': [presence_map.get(j, '-') for j in jours_ouvrables],
                     'jours_ouvrables': len(jours_ouvrables),
                     'np': list(presence_map.values()).count('P'),
@@ -234,6 +236,7 @@ def rapport_paysage_apercu(request):
     return redirect('presence:generer_rapport')
 
 
+@login_required
 def api_presence(request):
     if request.method == 'POST':
         agent_id = request.POST.get('agent_id')
@@ -265,6 +268,7 @@ def api_presence(request):
     return JsonResponse({'error': 'Méthode non autorisée'}, status=405)
 
 
+@login_required
 def generer_pdf_rapport(mois, annee):
     mois = int(mois)
     annee = int(annee)
@@ -341,6 +345,7 @@ def generer_pdf_rapport(mois, annee):
 
 
 
+@login_required
 def generer_pdf_rapport_paysage(mois, annee):
     institution = Institution.objects.first()
     #logo_path = f"file://{institution.logo.path}" if institution and institution.logo else ""
@@ -367,7 +372,7 @@ def generer_pdf_rapport_paysage(mois, annee):
             'matricule': agent.matricule,
             'grade': agent.grade,
             'sexe': agent.sexe,
-            'departement': agent.Division_Bureau.nom,
+            'departement': agent.rattachement_abrege,
             'jours': [presence_map.get(j, '-') for j in jours_ouvrables],
             'jours_ouvrables': len(jours_ouvrables),
             'np': list(presence_map.values()).count('P'),
@@ -405,29 +410,35 @@ def generer_pdf_rapport_paysage(mois, annee):
 
 from django.core.paginator import Paginator
 
+from django.shortcuts import get_object_or_404
+from datetime import datetime
+
 @login_required
 def details_agent(request, agent_id):
-    agent = Agent.objects.select_related('Division_Bureau').get(pk=agent_id)
-    # Recherche par date
+    agent = get_object_or_404(Agent.objects.select_related('bureau__division'), pk=agent_id)
+
     date_query = request.GET.get('date', '')
     presences_qs = Presence.objects.filter(agent=agent).order_by('-date')
+
+    # Filtrage par date (si au format valide YYYY-MM-DD)
     if date_query:
         try:
-            presences_qs = presences_qs.filter(date=date_query)
-        except:
-            pass  # ignore si la date n'est pas valide
+            date_obj = datetime.strptime(date_query, '%Y-%m-%d').date()
+            presences_qs = presences_qs.filter(date=date_obj)
+        except ValueError:
+            messages.warning(request, "Date invalide. Format attendu : AAAA-MM-JJ")
 
     # Pagination
-    paginator = Paginator(presences_qs, 10)  # 10 présences par page
+    paginator = Paginator(presences_qs, 10)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
-    total_presence = presences_qs.filter(statut='P').count()
-    total_absence = presences_qs.filter(statut='A').count()
-    return render(request, 'presence/details_agents.html', {
+    context = {
         'agent': agent,
         'page_obj': page_obj,
-        'total_presence': total_presence,
-        'total_absence': total_absence,
+        'total_presence': presences_qs.filter(statut='P').count(),
+        'total_absence': presences_qs.filter(statut='A').count(),
+        'total_retard': presences_qs.filter(statut='R').count(),
         'date_query': date_query,
-    })
+    }
+    return render(request, 'presence/details_agents.html', context)

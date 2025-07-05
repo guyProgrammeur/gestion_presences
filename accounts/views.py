@@ -5,8 +5,15 @@ from django.urls import reverse_lazy
 from django.contrib import messages
 from django.contrib.auth.forms import AuthenticationForm
 from django.http import HttpResponseRedirect
+from django.contrib import messages
 
 def custom_login_view(request):
+    if request.session.pop('_has_expired_warning', False):
+        messages.warning(request, "Votre session a expiré. Veuillez vous reconnecter.")
+
+    if request.user.is_authenticated:
+        return redirect('presence:dashboard')  # Redirection si déjà connecté
+    
     if request.method == 'POST':
         form = AuthenticationForm(request, data=request.POST)
         if form.is_valid():

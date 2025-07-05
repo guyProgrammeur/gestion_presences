@@ -135,7 +135,8 @@
 
     <div class="agent-info">
         <p><strong>Matricule :</strong> {{ agent.matricule }}</p>
-        <p><strong>Divisions et Bureaux :</strong> {{ agent.Division_Bureau.nom }}</p>
+        <h2>Détails de {{ agent.nom_complet }} ({{ agent.grade }})</h2>
+        <p><strong>Bureau :</strong> {{ agent.bureau.nom }} | <strong>Division :</strong> {{ agent.bureau.division.nom }}</p>
         <p><strong>Grade :</strong> {{ agent.grade }}</p>
         <p><strong>Sexe :</strong> 
             {% if agent.sexe == 'M' %}

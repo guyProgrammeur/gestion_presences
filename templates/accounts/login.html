@@ -100,11 +100,14 @@
     <div class="login-card">
         <h2 class="login-title">Connexion</h2>
 
-        {% if form.errors %}
-            <div class="error-message">
-                Nom d'utilisateur ou mot de passe invalide.
-            </div>
+       {% if messages %}
+        <ul class="messages">
+            {% for message in messages %}
+            <li class="{{ message.tags }}">{{ message }}</li>
+            {% endfor %}
+        </ul>
         {% endif %}
+
 
         <form method="post" class="login-form">
             {% csrf_token %}

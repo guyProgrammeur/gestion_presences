@@ -11,14 +11,54 @@ class Institution(models.Model):
 
     def __str__(self):
         return self.nom
-
-
-class DivisionEtBureau(models.Model):
+    class Meta:
+        verbose_name = "INSTITUTION"
+        verbose_name_plural = "INSTITUTIONS"
+    
+class Direction(models.Model):
     nom = models.CharField(max_length=100)
-    #code = models.CharField(max_length=10)
+    abrege = models.CharField(max_length=20)
+    chef = models.ForeignKey('Agent', null=True, blank=True, on_delete=models.SET_NULL, related_name='direction_dirigee')
 
     def __str__(self):
-        return f"Divisions / Bureaux: {self.nom}"
+        return self.nom
+
+    class Meta:
+        verbose_name = "DIRECTION"
+        verbose_name_plural = "DIRECTIONS"
+
+class Division(models.Model):
+    nom = models.CharField(max_length=100)
+    abrege = models.CharField(max_length=20)
+    direction = models.ForeignKey(Direction, on_delete=models.CASCADE, related_name='divisions')
+    chef = models.ForeignKey('Agent', null=True, blank=True, on_delete=models.SET_NULL, related_name='division_dirigee')
+
+    def __str__(self):
+        return self.nom
+    class Meta:
+        verbose_name = "DIVISION"
+        verbose_name_plural = "DIVISIONS"
+
+class Bureau(models.Model):
+    nom = models.CharField(max_length=100)
+    abrege = models.CharField(max_length=20)
+    division = models.ForeignKey(Division, on_delete=models.CASCADE, related_name='bureaux')
+    direction = models.ForeignKey(Direction, null=True, blank=True, on_delete=models.SET_NULL, related_name='bureaux_directs')
+    chef = models.ForeignKey('Agent', null=True, blank=True, on_delete=models.SET_NULL, related_name='bureau_dirigee')
+
+    def __str__(self):
+        return self.nom
+    
+    class Meta:
+        verbose_name = "BUREAU"
+        verbose_name_plural = "BUREAUX"
+
+# class DivisionEtBureau(models.Model):
+#     nom = models.CharField(max_length=100)
+#     #code = models.CharField(max_length=10)
+
+#     def __str__(self):
+#         return f"Divisions / Bureaux: {self.nom}"
 
 
 class Agent(models.Model):
@@ -27,10 +67,14 @@ class Agent(models.Model):
     matricule = models.CharField(max_length=20, unique=True)
     nom = models.CharField(max_length=100)
     postnom = models.CharField(max_length=100)
+    prenom = models.CharField(max_length=100)
     grade = models.CharField(max_length=100)
     sexe = models.CharField(max_length=1, choices=SEXE_CHOIX)
-    # fonction = models.CharField(max_length=100, null=True, blank=True)
-    Division_Bureau = models.ForeignKey(DivisionEtBureau, on_delete=models.PROTECT)
+
+    bureau = models.ForeignKey(Bureau, null=True, blank=True, on_delete=models.PROTECT, related_name='agents')
+    division = models.ForeignKey(Division, null=True, blank=True, on_delete=models.PROTECT, related_name='agents_sans_bureau')
+    direction = models.ForeignKey(Direction, null=True, blank=True, on_delete=models.PROTECT, related_name='agents_sans_division')
+
     photo = models.ImageField(upload_to='agents/', null=True, blank=True)
     heure_arrivee_attendue = models.TimeField(default='08:00')
     heure_depart_attendue = models.TimeField(default='16:00')
@@ -39,34 +83,46 @@ class Agent(models.Model):
         ordering = ['nom', 'postnom']
 
     def __str__(self):
-        return f"{self.nom} {self.postnom}"
-    def presence_mois(self, mois=None, annee=None):
-        aujourd_hui = timezone.now().date()
-        mois = mois or aujourd_hui.month
-        annee = annee or aujourd_hui.year
-        
-        return Presence.objects.filter(
-            agent=self,
-            date__year=annee,
-            date__month=mois,
-            statut='P'
-        ).count()
-    
-    def absences_mois(self, mois=None, annee=None):
-        aujourd_hui = timezone.now().date()
-        mois = mois or aujourd_hui.month
-        annee = annee or aujourd_hui.year
-        
-        return Presence.objects.filter(
-            agent=self,
-            date__year=annee,
-            date__month=mois,
-            statut='A'
-        ).count()
+        return f"{self.nom} {self.postnom} {self.prenom}"
+
     @property
     def nom_complet(self):
         return f"{self.nom} {self.postnom}"
 
+    def presence_mois(self, mois=None, annee=None):
+        aujourd_hui = timezone.now().date()
+        mois = mois or aujourd_hui.month
+        annee = annee or aujourd_hui.year
+        return Presence.objects.filter(agent=self, date__year=annee, date__month=mois, statut='P').count()
+
+    def absences_mois(self, mois=None, annee=None):
+        aujourd_hui = timezone.now().date()
+        mois = mois or aujourd_hui.month
+        annee = annee or aujourd_hui.year
+        return Presence.objects.filter(agent=self, date__year=annee, date__month=mois, statut='A').count()
+    @property
+    def rattachement_complet(self):
+        if self.bureau and self.bureau.division:
+            return f"{self.bureau.division.nom} / {self.bureau.nom}"
+        elif self.division:
+            return f"{self.division.nom}"
+        elif self.direction:
+            return f"{self.direction.nom}"
+        return "Aucun rattachement"
+    
+    @property
+    def rattachement_abrege(self):
+        if self.bureau and self.bureau.division:
+            return f"{self.bureau.division.abrege}/{self.bureau.abrege}"
+        elif self.division:
+            return self.division.abrege
+        elif self.direction:
+            return self.direction.abrege
+        return "-"
+
+    class Meta:
+        verbose_name = "AGENT"
+        verbose_name_plural = "AGENTS"
 
 class Presence(models.Model):
     TYPE_TRAVAIL_CHOIX = [
@@ -111,7 +167,6 @@ class Presence(models.Model):
         return None
     
     @classmethod
-    @classmethod
     def stats_mois(cls, mois, annee):
         return cls.objects.filter(
             date__year=annee,
@@ -122,3 +177,6 @@ class Presence(models.Model):
             absents=Count('id', filter=Q(statut='A')),
             retards=Count('id', filter=Q(statut='R'))
         )
+    class Meta:
+        verbose_name = "PRESENCE"
+        verbose_name_plural = "PRESENCES"

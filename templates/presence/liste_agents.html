@@ -10,35 +10,86 @@
             Ajouter un agent
         </a>
     </div>
-    <form method="get" class="search-form">
-        <div class="form-grid">
-            <div class="form-group">
-                <label for="search" class="form-label">Recherche</label>
-                <input type="text" name="search" id="search" value="{{ search_query }}"
-                       class="form-input"
-                       placeholder="Nom, postnom ou matricule">
-            </div>
-            <div class="form-group">
-                <label for="departement" class="form-label">Division et Bureaux</label>
-                <select id="departement" name="departement" class="form-input">
-                    <option value="all">Tous les  Services et Divisions</option>
-                    {% for departement in departements %}
-                    <option value="{{ departement.id }}" {% if departement.id|stringformat:"s" == selected_departement %}selected{% endif %}>
-                        {{ departement.nom }}
-                    </option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="form-group form-actions">
-                <button type="submit" class="btn btn-primary">
-                    Filtrer
-                </button>
-                <a href="{% url 'presence:liste_agents' %}" class="btn btn-secondary ml-2">
-                    Réinitialiser
-                </a>
-            </div>
-        </div>
+    <style>
+        .filter-form {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 12px;
+            padding: 16px;
+            background: #f8fafc;
+            border-radius: 8px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+            margin-bottom: 24px;
+        }
+        .filter-form input[type="text"],
+        .filter-form select {
+            border: 1px solid #d1d5db;
+            padding: 8px 12px;
+            border-radius: 4px;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            font-size: 1rem;
+        }
+        .filter-form input[type="text"]:focus,
+        .filter-form select:focus {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 2px #93c5fd;
+        }
+        .filter-form button[type="submit"] {
+            background: #2563eb;
+            color: #fff;
+            padding: 8px 20px;
+            border: none;
+            border-radius: 4px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .filter-form button[type="submit"]:hover {
+            background: #1d4ed8;
+        }
+    </style>
+    <form method="get" class="filter-form">
+        <input 
+            type="text" 
+            name="search" 
+            placeholder="Recherche..." 
+            value="{{ search_query }}"
+        />
+
+        <select 
+            name="division" 
+            id="division-select"
+        >
+            <option value="all">-- Toutes les divisions --</option>
+            {% for division in divisions %}
+                <option value="{{ division.id }}" {% if division.id|stringformat:"s" == selected_division %}selected{% endif %}>
+                    {{ division.nom }}
+                </option>
+            {% endfor %}
+        </select>
+
+        <select 
+            name="bureau" 
+            id="bureau-select"
+        >
+            <option value="all">-- Tous les bureaux --</option>
+            {% for bureau in bureaux %}
+                <option value="{{ bureau.id }}" data-division="{{ bureau.division.id }}"
+                    {% if bureau.id|stringformat:"s" == selected_bureau %}selected{% endif %}>
+                    {{ bureau.nom }}
+                </option>
+            {% endfor %}
+        </select>
+
+        <button 
+            type="submit"
+        >
+            Filtrer
+        </button>
     </form>
+
     <div class="table-container">
         <table class="data-table">
             <thead>
@@ -129,5 +180,32 @@
         </div>
     </div>
     {% endif %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const divisionSelect = document.getElementById('division-select');
+            const bureauSelect = document.getElementById('bureau-select');
+
+            function filterBureaux() {
+                const selectedDivision = divisionSelect.value;
+                const bureauOptions = bureauSelect.querySelectorAll('option');
+
+                bureauOptions.forEach(opt => {
+                    const divId = opt.getAttribute('data-division');
+                    if (!divId || selectedDivision === "all" || divId === selectedDivision) {
+                        opt.hidden = false;
+                    } else {
+                        opt.hidden = true;
+                        if (opt.selected) {
+                            opt.selected = false;
+                        }
+                    }
+                });
+            }
+
+            divisionSelect.addEventListener('change', filterBureaux);
+            filterBureaux(); // au chargement
+        });
+    </script>
+
 </div>
 {% endblock %}

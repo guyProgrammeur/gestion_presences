@@ -28,7 +28,6 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
-
 # Application definition
 
 INSTALLED_APPS = [
@@ -52,17 +51,16 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'accounts.middlewares.SessionExpiryMiddleware',
 ]
 
 
 ROOT_URLCONF = 'gestion_presences.urls'
 
 
-
-LOGIN_URL = 'login'
-LOGIN_REDIRECT_URL = 'dashboard'  # ou 'profil'
-LOGOUT_REDIRECT_URL = 'login'
-
+LOGIN_URL = 'accounts:login'  # ou le nom de ta vue login
+LOGIN_REDIRECT_URL = 'presence:dashboard'  # après login réussi
+LOGOUT_REDIRECT_URL = 'accounts:login'  # après logout
 
 TEMPLATES = [
     {
@@ -140,3 +138,7 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [BASE_DIR / "static"]
+
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+SESSION_COOKIE_AGE = 1800  # 30 minutes (en secondes)
+SESSION_SAVE_EVERY_REQUEST = True  # Réinitialise le compteur à chaque requête
