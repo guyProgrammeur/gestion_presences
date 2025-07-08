@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: gestion-presences
+    runtime: docker
+    plan: free
+    autoDeploy: true
+    envVars:
+      - key: DATABASE_URL
+        value: ton_url_neon_postgres
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: "False"

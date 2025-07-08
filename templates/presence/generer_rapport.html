@@ -1,43 +1,46 @@
 {% extends "presence/base.html" %}
 
-{% block extra_css %}{% endblock %}
-
 {% block content %}
-<div class="report-container">
-    <h1 class="report-title">📄 Générer un rapport mensuel</h1>
+<div class="max-w-xl mx-auto mt-4 bg-white rounded-xl shadow-lg p-8">
+    <h1 class="text-2xl font-bold text-blue-900 mb-8 flex items-center gap-2">
+        <span>📄</span> Générer un rapport mensuel
+    </h1>
 
-    <form method="post" class="report-form">
+    <form method="post" class="space-y-6">
         {% csrf_token %}
 
-        <div class="form-group">
-            <label for="{{ form.mois.id_for_label }}" class="form-label">Mois :</label>
-            <select name="{{ form.mois.name }}" id="{{ form.mois.id_for_label }}" class="form-select">
+        <div>
+            <label for="{{ form.mois.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Mois :</label>
+            <select name="{{ form.mois.name }}" id="{{ form.mois.id_for_label }}"
+                class="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
                 {% for val, label in form.mois.field.choices %}
                     <option value="{{ val }}"{% if form.mois.value == val %} selected{% endif %}>{{ label }}</option>
                 {% endfor %}
             </select>
         </div>
 
-        <div class="form-group">
-            <label for="{{ form.annee.id_for_label }}" class="form-label">Année :</label>
-            <select name="{{ form.annee.name }}" id="{{ form.annee.id_for_label }}" class="form-select">
+        <div>
+            <label for="{{ form.annee.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Année :</label>
+            <select name="{{ form.annee.name }}" id="{{ form.annee.id_for_label }}"
+                class="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
                 {% for val, label in form.annee.field.choices %}
                     <option value="{{ val }}"{% if form.annee.value == val %} selected{% endif %}>{{ label }}</option>
                 {% endfor %}
             </select>
         </div>
 
-        <div class="button-group">
+        <div class="flex flex-col md:flex-row gap-4 mt-8">
             <button formaction="{% url 'presence:generer_rapport' %}"
-                    class="report-button button-primary">
-                 Rapport Mensuel Condesé 
+                    class="flex-1 bg-blue-700 hover:bg-blue-900 text-white font-semibold px-6 py-3 rounded-lg shadow transition">
+                Rapport Mensuel Condensé
             </button>
-            <button type="submit" formaction="{% url 'presence:rapport_paysage_apercu' %}" formmethod="post" class="report-button button-preview button-secondary">
+            <button type="submit" formaction="{% url 'presence:rapport_paysage_apercu' %}" formmethod="post"
+                    class="flex-1 bg-yellow-500 hover:bg-yellow-600 text-white font-semibold px-6 py-3 rounded-lg shadow transition">
                 Aperçu avant Impression
             </button>
             <button formaction="{% url 'presence:rapport_paysage' %}"
-                    class="report-button button-secondary">
-                📄 Rapport de Presences élargi
+                    class="flex-1 bg-green-700 hover:bg-green-900 text-white font-semibold px-6 py-3 rounded-lg shadow transition">
+                📄 Rapport de Présences élargi
             </button>
         </div>
     </form>

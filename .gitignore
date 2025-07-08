@@ -22,3 +22,9 @@ gtk3/
 # Ignorer les fichiers de config système
 .DS_Store
 Thumbs.db
+staticfiles/
+.vscode/
+
+env/
+venv/
+.venv/

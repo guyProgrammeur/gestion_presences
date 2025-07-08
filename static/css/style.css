@@ -588,3 +588,124 @@ a:visited {
     text-align: center;
     color: #6b7280;
 }
+
+    /* Styles généraux */
+    .card {
+        background-color: #ffffff;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        padding: 2rem;
+        max-width: 800px;
+        margin: 2rem auto;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    h2 {
+        color: #2d3748;
+        font-size: 1.8rem;
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid #e2e8f0;
+    }
+
+    h3 {
+        color: #2d3748;
+        font-size: 1.4rem;
+        margin: 1.5rem 0 1rem;
+    }
+
+    /* Badges */
+    .badge {
+        display: inline-block;
+        padding: 0.35rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        margin-right: 0.5rem;
+    }
+
+    .badge-male {
+        background-color: #10b981;
+        color: white;
+    }
+
+    .badge-female {
+        background-color: #ef4444;
+        color: white;
+    }
+
+    /* Informations agent */
+    .agent-info {
+        margin-bottom: 1.5rem;
+    }
+
+    .agent-info p {
+        margin: 0.5rem 0;
+        color: #4a5568;
+    }
+
+    .agent-info strong {
+        color: #2d3748;
+        min-width: 120px;
+        display: inline-block;
+    }
+
+    /* Tableau */
+    .data-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1.5rem 0;
+    }
+
+    .data-table th,
+    .data-table td {
+        padding: 0.75rem 1rem;
+        text-align: left;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .data-table th {
+        background-color: #f7fafc;
+        color: #4a5568;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.8rem;
+    }
+
+    .data-table tr:hover td {
+        background-color: #f8f9fa;
+    }
+
+    /* Bouton */
+    .btn {
+        display: inline-block;
+        padding: 0.6rem 1.2rem;
+        background-color: #4a5568;
+        color: white;
+        text-decoration: none;
+        border-radius: 4px;
+        font-weight: 500;
+        transition: background-color 0.2s;
+        margin-top: 1rem;
+    }
+
+    .btn:hover {
+        background-color: #2d3748;
+    }
+
+    .btn-secondary {
+        background-color: #718096;
+    }
+
+    .btn-secondary:hover {
+        background-color: #4a5568;
+    }
+
+    /* Message vide */
+    .empty-message {
+        color: #718096;
+        font-style: italic;
+        text-align: center;
+        padding: 1rem;
+    }
+    

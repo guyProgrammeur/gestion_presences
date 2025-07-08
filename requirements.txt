@@ -1,0 +1,7 @@
+Django>=5.0,<6.0
+python-dotenv>=1.1.1
+weasyprint>=65.1
+psycopg[binary]>=3.1  # si tu utilises PostgreSQL
+whitenoise>=6.0  # pour servir les fichiers statiques (utile en production)
+gunicorn
+dj-database-url
