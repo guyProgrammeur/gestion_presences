@@ -5,3 +5,4 @@ psycopg[binary]>=3.1  # si tu utilises PostgreSQL
 whitenoise>=6.0  # pour servir les fichiers statiques (utile en production)
 gunicorn
 dj-database-url
+whitenoise
