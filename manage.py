@@ -10,7 +10,10 @@ else:
     
 gtk_path = os.path.join(base_dir, "gtk3", "bin")
 os.environ["PATH"] = gtk_path + os.pathsep + os.environ["PATH"]
-os.add_dll_directory(gtk_path)  # Nécessaire pour Python 3.8+
+
+
+if sys.platform == "win32":
+    os.add_dll_directory(gtk_path)  # Nécessaire pour Python 3.8+
 
 """Django's command-line utility for administrative tasks."""
 import os
