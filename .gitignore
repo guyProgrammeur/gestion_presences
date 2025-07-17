@@ -9,9 +9,10 @@ __pycache__/
 *.dll
 *.so
 
-# Ignorer le dossier gtk3
+# Ignorer le dossier gtk3, dist, GESP
 gtk3/
-
+dist/
+GESP/
 # Ignorer les données personnelles éventuelles
 *.log
 *.db

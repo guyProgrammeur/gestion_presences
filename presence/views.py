@@ -81,11 +81,10 @@ def gestion_presences(request):
 
     if bureau_id:
         agents_query = agents_query.filter(bureau_id=bureau_id)
-
-
+    
     divisions = Division.objects.all()
     bureaux = Bureau.objects.select_related('division').all()
-    agents_query = agents_query.order_by('nom', 'postnom', 'prenom')
+    agents_query = agents_query.order_by('bureau__division__ordre', 'nom', 'postnom', 'prenom')
 
     paginator = Paginator(agents_query, 20)  # 20 agents par page
     page_number = request.GET.get('page')
@@ -152,6 +151,37 @@ def liste_agents(request):
         'search_query': search_query,
     }
     return render(request, 'presence/liste_agents.html', context)
+
+
+
+from django.views.decorators.csrf import csrf_exempt
+from django.http import JsonResponse
+from django.utils import timezone
+
+@csrf_exempt  # facultatif si tu passes bien le token CSRF dans fetch
+def update_presence_ajax(request):
+    if request.method == 'POST':
+        try:
+            date_str = request.POST.get('date')
+            if date_str:
+                date_selectionnee = timezone.datetime.strptime(date_str, '%Y-%m-%d').date()
+            else:
+                date_selectionnee = timezone.now().date()
+
+            agent_id = request.POST.get('agent_id')
+            statut = request.POST.get('statut')
+            agent = Agent.objects.get(id=agent_id)
+            print(agent, date_selectionnee, statut)
+            Presence.objects.update_or_create(
+                agent=agent,
+                date=date_selectionnee,
+                defaults={'statut': statut, 'enregistre_par': request.user}
+            )
+
+            # Optionnel : renvoyer HTML mis à jour ou juste un statut
+            return JsonResponse({'success': True, 'statut': statut})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
 
 @login_required
 def generer_rapport(request):

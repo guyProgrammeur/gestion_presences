@@ -1,0 +1,9 @@
+{% if not p %}
+  <span class="inline-block bg-red-500 text-white px-3 py-1 rounded-full">Absent</span>
+{% elif p.statut == 'P' %}
+  <span class="inline-block bg-green-500 text-white px-3 py-1 rounded-full">Présent</span>
+{% elif p.statut == 'L' %}
+  <span class="inline-block bg-yellow-500 text-white px-3 py-1 rounded-full">Retard</span>
+{% else %}
+  {{ p.get_statut_display }}
+{% endif %}

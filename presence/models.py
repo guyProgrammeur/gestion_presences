@@ -32,7 +32,7 @@ class Division(models.Model):
     abrege = models.CharField(max_length=20)
     direction = models.ForeignKey(Direction, on_delete=models.CASCADE, related_name='divisions')
     chef = models.ForeignKey('Agent', null=True, blank=True, on_delete=models.SET_NULL, related_name='division_dirigee')
-
+    ordre = models.PositiveIntegerField(default=0, help_text="Ordre d'affichage de la division")
     def __str__(self):
         return self.nom
     class Meta:
@@ -80,14 +80,14 @@ class Agent(models.Model):
     heure_depart_attendue = models.TimeField(default='16:00')
 
     class Meta:
-        ordering = ['nom', 'postnom']
+        ordering = ['nom', 'postnom', 'prenom']
 
     def __str__(self):
         return f"{self.nom} {self.postnom} {self.prenom}"
 
     @property
     def nom_complet(self):
-        return f"{self.nom} {self.postnom}"
+        return f"{self.nom} {self.postnom} {self.prenom}"
 
     def presence_mois(self, mois=None, annee=None):
         aujourd_hui = timezone.now().date()
