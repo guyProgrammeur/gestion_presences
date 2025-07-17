@@ -122,8 +122,8 @@ def liste_agents(request):
     search_query = request.GET.get('search', '')
     bureau_id = request.GET.get('bureau')
     division_id = request.GET.get('division')
-
-    agents = Agent.objects.select_related('bureau', 'division', 'direction').order_by('nom', 'postnom','prenom')
+    
+    agents = Agent.objects.select_related('bureau', 'division', 'direction').order_by('bureau__division__ordre','nom', 'postnom','prenom')
 
     if search_query:
         agents = agents.filter(
@@ -227,42 +227,147 @@ def rapport_paysage_apercu(request):
             institution = Institution.objects.first()
             logo_abspath = institution.logo.path.replace('\\', '/')
             logo_path = f"file:///{logo_abspath}"
-            agents = Agent.objects.all().prefetch_related('presence_set')
-            jours_qs = Presence.objects.filter(date__year=annee, date__month=mois).order_by('date')
+            # agents = Agent.objects.select_related('bureau__division').prefetch_related('presence_set') \
+            # .order_by('bureau__division__ordre', 'nom', 'postnom', 'prenom')
+
+            #agents = Agent.objects.select_related('bureau__division').prefetch_related('presence_set').order_by('bureau__division__ordre', 'nom', 'postnom', 'prenom')
+
+            #jours_qs = Presence.objects.filter(date__year=annee, date__month=mois).order_by('date','agent__bureau__division__ordre')
+            jours_qs = Presence.objects.select_related(
+                'agent__bureau__division'
+            ).filter(
+                date__year=annee,
+                date__month=mois
+            ).order_by('date', 'agent__bureau__division__ordre')
+
+            #jours_qs = Presence.objects.filter(date__year=annee, date__month=mois).order_by('date','agent__bureau__division__ordre')
             jours_ouvrables = sorted(set(p.date.day for p in jours_qs))
+            #lignes = []
+            # On suppose qu'il n'y a qu'une direction principale
+            direction = Direction.objects.first()
             lignes = []
-            for i, agent in enumerate(agents, start=1):
+            numero = 1
+
+            # Chef de direction
+            if direction and direction.chef:
+                agent = direction.chef
                 presences = agent.presence_set.filter(date__year=annee, date__month=mois)
                 presence_map = {p.date.day: p.statut for p in presences}
+
+                jours_qs = Presence.objects.filter(date__year=annee, date__month=mois).order_by('date')
+                jours_ouvrables = sorted(set(p.date.day for p in jours_qs))
                 lignes.append({
-                    'numero': i,
+                    'numero': numero,
                     'nom': agent.nom_complet,
                     'matricule': agent.matricule,
                     'grade': agent.grade,
                     'sexe': agent.sexe,
-                    'departement': agent.rattachement_abrege,
+                    'departement': direction.abrege,
                     'jours': [presence_map.get(j, '-') for j in jours_ouvrables],
                     'jours_ouvrables': len(jours_ouvrables),
                     'np': list(presence_map.values()).count('P'),
                     'na': list(presence_map.values()).count('A'),
-                    'remarque': '',
+                    'remarque': 'D-CS',
                 })
-            context = {
-                'institution': institution,
-                'logo_path': logo_path,
-                'mois': mois,
-                'annee': annee,
-                'mois_nom': [
-                    'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
-                    'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
-                ][mois - 1],
-                'lignes': lignes,
-                'jours_ouvrables': jours_ouvrables,
-                'premiere_page': True,
-                'apercu': True,  # Pour adapter le template si besoin
-            }
+                numero += 1
+
+            # Pour chaque division
+            for division in direction.divisions.all().order_by('ordre'):
+                # Chef de division
+                if division.chef and division.chef != direction.chef:
+                    agent = division.chef
+                    presences = agent.presence_set.filter(date__year=annee, date__month=mois)
+                    presence_map = {p.date.day: p.statut for p in presences}
+                    lignes.append({
+                        'numero': numero,
+                        'nom': agent.nom_complet,
+                        'matricule': agent.matricule,
+                        'grade': agent.grade,
+                        'sexe': agent.sexe,
+                        'departement': division.abrege,
+                        'jours': [presence_map.get(j, '-') for j in jours_ouvrables],
+                        'jours_ouvrables': len(jours_ouvrables),
+                        'np': list(presence_map.values()).count('P'),
+                        'na': list(presence_map.values()).count('A'),
+                        'remarque': 'CD',
+                    })
+                    numero += 1
+                # Pour chaque bureau de la division
+                for bureau in division.bureaux.all() :
+                    # Chef de bureau
+                    if bureau.chef and bureau.chef != direction.chef:
+                        agent = bureau.chef
+                        presences = agent.presence_set.filter(date__year=annee, date__month=mois)
+                        presence_map = {p.date.day: p.statut for p in presences}
+                        lignes.append({
+                            'numero': numero,
+                            'nom': agent.nom_complet,
+                            'matricule': agent.matricule,
+                            'grade': agent.grade,
+                            'sexe': agent.sexe,
+                            'departement': f"{division.abrege}/{bureau.abrege}",
+                            'jours': [presence_map.get(j, '-') for j in jours_ouvrables],
+                            'jours_ouvrables': len(jours_ouvrables),
+                            'np': list(presence_map.values()).count('P'),
+                            'na': list(presence_map.values()).count('A'),
+                            'remarque': 'CB',
+                        })
+                        numero += 1
+
+                    # Membres du bureau (hors chef)
+                    #membres_bureau = bureau.agents.exclude(id=bureau.chef.id if bureau.chef else None)
+                    membres_bureau = bureau.agents.exclude(id=bureau.chef.id) if bureau.chef else bureau.agents.all()
+                    for agent in membres_bureau:
+                        presences = agent.presence_set.filter(date__year=annee, date__month=mois)
+                        presence_map = {p.date.day: p.statut for p in presences}
+                        lignes.append({
+                            'numero': numero,
+                            'nom': agent.nom_complet,
+                            'matricule': agent.matricule,
+                            'grade': agent.grade,
+                            'sexe': agent.sexe,
+                            'departement': f"{division.abrege}/{bureau.abrege}",
+                            'jours': [presence_map.get(j, '-') for j in jours_ouvrables],
+                            'jours_ouvrables': len(jours_ouvrables),
+                            'np': list(presence_map.values()).count('P'),
+                            'na': list(presence_map.values()).count('A'),
+                            'remarque': '',
+                        })
+                        numero += 1
+
+                    # for i, agent in enumerate(agents, start=1):
+                    #     presences = agent.presence_set.filter(date__year=annee, date__month=mois)
+                    #     presence_map = {p.date.day: p.statut for p in presences}
+                    #     lignes.append({
+                    #         'numero': i,
+                    #         'nom': agent.nom_complet,
+                    #         'matricule': agent.matricule,
+                    #         'grade': agent.grade,
+                    #         'sexe': agent.sexe,
+                    #         'departement': agent.rattachement_abrege,
+                    #         'jours': [presence_map.get(j, '-') for j in jours_ouvrables],
+                    #         'jours_ouvrables': len(jours_ouvrables),
+                    #         'np': list(presence_map.values()).count('P'),
+                    #         'na': list(presence_map.values()).count('A'),
+                    #         'remarque': '',
+                    #     })
+                    
+                context = {
+                    'institution': institution,
+                    'logo_path': logo_path,
+                    'mois': mois,
+                    'annee': annee,
+                    'mois_nom': [
+                        'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
+                        'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
+                    ][mois - 1],
+                    'lignes': lignes,
+                    'jours_ouvrables': jours_ouvrables,
+                    'premiere_page': True,
+                    'apercu': True,  # Pour adapter le template si besoin
+                }
             return render(request, 'presence/partials/_rapport_paysage.html', context)
-    # Si GET ou formulaire invalide, retour au formulaire
+            # Si GET ou formulaire invalide, retour au formulaire
     return redirect('presence:generer_rapport')
 
 
@@ -308,7 +413,15 @@ def generer_pdf_rapport(mois, annee):
     institution = Institution.objects.first()
     logo_abspath = institution.logo.path.replace('\\', '/')
     logo_path = f"file:///{logo_abspath}"
-    agents = Agent.objects.all().prefetch_related('presence_set')
+    #agents = Agent.objects.all().prefetch_related('presence_set')
+    agents = Agent.objects.select_related(
+        'bureau__division__direction'
+    ).prefetch_related(
+        'presence_set'
+    ).order_by(
+        'bureau__division__ordre',        # ou direction__ordre si nécessaire
+        'nom', 'postnom', 'prenom'
+    )
 
     # Préparation des données pour le template
     donnees_agents = []
@@ -393,6 +506,7 @@ def generer_pdf_rapport_paysage(mois, annee):
         agent = direction.chef
         presences = agent.presence_set.filter(date__year=annee, date__month=mois)
         presence_map = {p.date.day: p.statut for p in presences}
+
         jours_qs = Presence.objects.filter(date__year=annee, date__month=mois).order_by('date')
         jours_ouvrables = sorted(set(p.date.day for p in jours_qs))
         lignes.append({
@@ -411,9 +525,9 @@ def generer_pdf_rapport_paysage(mois, annee):
         numero += 1
 
     # Pour chaque division
-    for division in direction.divisions.all():
+    for division in direction.divisions.all().order_by('ordre'):
         # Chef de division
-        if division.chef:
+        if division.chef and division.chef != direction.chef:
             agent = division.chef
             presences = agent.presence_set.filter(date__year=annee, date__month=mois)
             presence_map = {p.date.day: p.statut for p in presences}
@@ -433,9 +547,9 @@ def generer_pdf_rapport_paysage(mois, annee):
             numero += 1
 
         # Pour chaque bureau de la division
-        for bureau in division.bureaux.all():
+        for bureau in division.bureaux.all() :
             # Chef de bureau
-            if bureau.chef:
+            if bureau.chef and bureau.chef != direction.chef:
                 agent = bureau.chef
                 presences = agent.presence_set.filter(date__year=annee, date__month=mois)
                 presence_map = {p.date.day: p.statut for p in presences}
@@ -455,7 +569,8 @@ def generer_pdf_rapport_paysage(mois, annee):
                 numero += 1
 
             # Membres du bureau (hors chef)
-            membres_bureau = bureau.agents.exclude(id=bureau.chef.id if bureau.chef else None)
+            #membres_bureau = bureau.agents.exclude(id=bureau.chef.id if bureau.chef else None)
+            membres_bureau = bureau.agents.exclude(id=bureau.chef.id) if bureau.chef else bureau.agents.all()
             for agent in membres_bureau:
                 presences = agent.presence_set.filter(date__year=annee, date__month=mois)
                 presence_map = {p.date.day: p.statut for p in presences}
@@ -475,24 +590,24 @@ def generer_pdf_rapport_paysage(mois, annee):
                 numero += 1
 
         # Membres de la division sans bureau (hors chef)
-        membres_division = division.agents_sans_bureau.exclude(id=division.chef.id if division.chef else None)
-        for agent in membres_division:
-            presences = agent.presence_set.filter(date__year=annee, date__month=mois)
-            presence_map = {p.date.day: p.statut for p in presences}
-            lignes.append({
-                'numero': numero,
-                'nom': agent.nom_complet,
-                'matricule': agent.matricule,
-                'grade': agent.grade,
-                'sexe': agent.sexe,
-                'departement': division.abrege,
-                'jours': [presence_map.get(j, '-') for j in jours_ouvrables],
-                'jours_ouvrables': len(jours_ouvrables),
-                'np': list(presence_map.values()).count('P'),
-                'na': list(presence_map.values()).count('A'),
-                'remarque': '',
-            })
-            numero += 1
+        # membres_division = division.agents_sans_bureau.exclude(id=division.chef.id if division.chef else None)
+        # for agent in membres_division:
+            # presences = agent.presence_set.filter(date__year=annee, date__month=mois)
+            # presence_map = {p.date.day: p.statut for p in presences}
+            # lignes.append({
+            #     'numero': numero,
+            #     'nom': agent.nom_complet,
+            #     'matricule': agent.matricule,
+            #     'grade': agent.grade,
+            #     'sexe': agent.sexe,
+            #     'departement': division.abrege,
+            #     'jours': [presence_map.get(j, '-') for j in jours_ouvrables],
+            #     'jours_ouvrables': len(jours_ouvrables),
+            #     'np': list(presence_map.values()).count('P'),
+            #     'na': list(presence_map.values()).count('A'),
+            #     'remarque': '',
+            # })
+            # numero += 1
 
     context = {
         'institution': institution,
