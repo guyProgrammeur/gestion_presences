@@ -227,6 +227,7 @@ def rapport_paysage_apercu(request):
             institution = Institution.objects.first()
             logo_abspath = institution.logo.path.replace('\\', '/')
             #logo_path = f"file:///{logo_abspath}"
+            
             logo_path = "file:///app/media/institution/logo.png"
             # agents = Agent.objects.select_related('bureau__division').prefetch_related('presence_set') \
             # .order_by('bureau__division__ordre', 'nom', 'postnom', 'prenom')
@@ -268,7 +269,7 @@ def rapport_paysage_apercu(request):
                     'jours_ouvrables': len(jours_ouvrables),
                     'np': list(presence_map.values()).count('P'),
                     'na': list(presence_map.values()).count('A'),
-                    'remarque': 'D-CS',
+                    'remarque': '',
                 })
                 numero += 1
 
@@ -290,7 +291,7 @@ def rapport_paysage_apercu(request):
                         'jours_ouvrables': len(jours_ouvrables),
                         'np': list(presence_map.values()).count('P'),
                         'na': list(presence_map.values()).count('A'),
-                        'remarque': 'CD',
+                        'remarque': '',
                     })
                     numero += 1
                 # Pour chaque bureau de la division
@@ -311,7 +312,7 @@ def rapport_paysage_apercu(request):
                             'jours_ouvrables': len(jours_ouvrables),
                             'np': list(presence_map.values()).count('P'),
                             'na': list(presence_map.values()).count('A'),
-                            'remarque': 'CB',
+                            'remarque': '',
                         })
                         numero += 1
 
@@ -524,7 +525,7 @@ def generer_pdf_rapport_paysage(mois, annee):
             'jours_ouvrables': len(jours_ouvrables),
             'np': list(presence_map.values()).count('P'),
             'na': list(presence_map.values()).count('A'),
-            'remarque': 'D-CS',
+            'remarque': '',
         })
         numero += 1
 
@@ -546,7 +547,7 @@ def generer_pdf_rapport_paysage(mois, annee):
                 'jours_ouvrables': len(jours_ouvrables),
                 'np': list(presence_map.values()).count('P'),
                 'na': list(presence_map.values()).count('A'),
-                'remarque': 'CD',
+                'remarque': '',
             })
             numero += 1
 
@@ -568,7 +569,7 @@ def generer_pdf_rapport_paysage(mois, annee):
                     'jours_ouvrables': len(jours_ouvrables),
                     'np': list(presence_map.values()).count('P'),
                     'na': list(presence_map.values()).count('A'),
-                    'remarque': 'CB',
+                    'remarque': '',
                 })
                 numero += 1
 
