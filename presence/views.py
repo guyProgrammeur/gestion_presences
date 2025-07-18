@@ -226,7 +226,8 @@ def rapport_paysage_apercu(request):
             # Génère le même contexte que pour le PDF paysage
             institution = Institution.objects.first()
             logo_abspath = institution.logo.path.replace('\\', '/')
-            logo_path = f"file:///{logo_abspath}"
+            #logo_path = f"file:///{logo_abspath}"
+            logo_path = "file:///app/media/institution/logo.png"
             # agents = Agent.objects.select_related('bureau__division').prefetch_related('presence_set') \
             # .order_by('bureau__division__ordre', 'nom', 'postnom', 'prenom')
 
@@ -412,7 +413,8 @@ def generer_pdf_rapport(mois, annee):
     # Récupération des données
     institution = Institution.objects.first()
     logo_abspath = institution.logo.path.replace('\\', '/')
-    logo_path = f"file:///{logo_abspath}"
+    #logo_path = f"file:///{logo_abspath}"
+    logo_path = "file:///app/media/institution/logo.png"
     #agents = Agent.objects.all().prefetch_related('presence_set')
     agents = Agent.objects.select_related(
         'bureau__division__direction'
