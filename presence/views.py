@@ -491,8 +491,9 @@ def generer_pdf_rapport(mois, annee):
 
 def generer_pdf_rapport_paysage(mois, annee):
     institution = Institution.objects.first()
-    logo_abspath = institution.logo.path.replace('\\', '/') if institution and institution.logo else ""
-    logo_path = f"file:///{logo_abspath}" if logo_abspath else ""
+    #logo_abspath = institution.logo.path.replace('\\', '/') if institution and institution.logo else ""
+    #logo_path = f"file:///{logo_abspath}" if logo_abspath else "" <img src="{% static 'images/logo.png' %}" alt="Logo">
+    logo_path = "https://gestion-presences.onrender.com/media/institution/logo.png"
     mois = int(mois)
     annee = int(annee)
 

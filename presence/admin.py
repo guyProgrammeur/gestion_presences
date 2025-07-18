@@ -2,8 +2,10 @@ from django.contrib import admin
 from django.utils.html import format_html
 from .models import (
     Institution, Direction, Division, Bureau,
-    Agent, Presence
+    Agent, Presence,JourOuvrable, JourFerie
 )
+
+
 
 @admin.register(Institution)
 class InstitutionAdmin(admin.ModelAdmin):
@@ -84,6 +86,18 @@ class PresenceAdmin(admin.ModelAdmin):
         updated = queryset.update(statut='Présent')
         self.message_user(request, f"{updated} présences marquées comme Présent.")
     marquer_present.short_description = "Marquer comme Présent"
+
+@admin.register(JourOuvrable)
+class JourOuvrableAdmin(admin.ModelAdmin):
+    list_display = ("jour", "est_ouvrable")
+    list_editable = ("est_ouvrable",)
+
+@admin.register(JourFerie)
+class JourFerieAdmin(admin.ModelAdmin):
+    list_display = ("date", "description")
+    search_fields = ("description",)
+    list_filter = ("date",)
+
 
 # Si tu veux garder l'enregistrement direct :
 # admin.site.register(Institution, InstitutionAdmin)

@@ -180,3 +180,29 @@ class Presence(models.Model):
     class Meta:
         verbose_name = "PRESENCE"
         verbose_name_plural = "PRESENCES"
+
+
+# Modèle pour configurer les jours ouvrables
+class JourOuvrable(models.Model):
+    JOUR_CHOICES = [
+        (0, "Lundi"),
+        (1, "Mardi"),
+        (2, "Mercredi"),
+        (3, "Jeudi"),
+        (4, "Vendredi"),
+        (5, "Samedi"),
+        (6, "Dimanche"),
+    ]
+    jour = models.IntegerField(choices=JOUR_CHOICES, unique=True)
+    est_ouvrable = models.BooleanField(default=True)
+
+    def __str__(self):
+        return f"{self.get_jour_display()} - {'Ouvrable' if self.est_ouvrable else 'Non ouvrable'}"
+
+# Modèle pour enregistrer les jours fériés spécifiques
+class JourFerie(models.Model):
+    date = models.DateField(unique=True)
+    description = models.CharField(max_length=255)
+
+    def __str__(self):
+        return f"{self.date} - {self.description}"
