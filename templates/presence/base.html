@@ -1,4 +1,6 @@
 {% load static %}
+{% load user_groups %}
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -27,13 +29,25 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                         </svg>
                     </button>
-                    
+
                     <div class="absolute right-0 mt-2 w-48 bg-white text-blue-900 rounded-md shadow-lg py-1 z-50 hidden group-hover:block">
+                        {% if request.user|has_group:"Administrateur" or request.user|has_group:"Agent RH" %}
+                            <a href="{% url 'presence:gestion_presences' %}" class="block px-4 py-2 hover:bg-blue-100"> Gérer les présences</a>
+                            <a href="{% url 'presence:generer_rapport' %}" class="block px-4 py-2 hover:bg-blue-100">Générer rapport</a>
+                        {% endif %}
+
+                        {% if request.user|has_group:"Administrateur" %}
+                            <a href="{% url 'presence:liste_agents' %}" class="block px-4 py-2 hover:bg-blue-100"> Liste des agents</a>
+                            <a href="{% url 'admin:index' %}" class="block px-4 py-2 hover:bg-blue-100"> Administration</a>
+                        {% endif %}
+                    </div>
+
+                    <!-- <div class="absolute right-0 mt-2 w-48 bg-white text-blue-900 rounded-md shadow-lg py-1 z-50 hidden group-hover:block">
                         <a href="{% url 'presence:gestion_presences' %}" class="block px-4 py-2 hover:bg-blue-100"> Gérer les présences</a>
                         <a href="{% url 'presence:generer_rapport' %}" class="block px-4 py-2 hover:bg-blue-100">Générer rapport</a>
                         <a href="{% url 'presence:liste_agents' %}" class="block px-4 py-2 hover:bg-blue-100"> Liste des agents</a>
                         <a href="{% url 'admin:index' %}" class="block px-4 py-2 hover:bg-blue-100"> Administration</a>
-                    </div>
+                    </div> -->
                 </div>
                 
                 <a href="{% url 'accounts:logout' %}" class="hover:underline">Déconnexion</a>
@@ -58,11 +72,17 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                     </svg>
                 </button>
+
                 <div class="hidden bg-blue-700 mt-1 rounded" id="mobile-dropdown">
-                    <a href="{% url 'presence:gestion_presences' %}" class="block py-2 px-4 hover:bg-blue-600"> Gérer les présences</a>
-                    <a href="{% url 'presence:generer_rapport' %}" class="block py-2 px-4 hover:bg-blue-600">Générer rapport</a>
-                    <a href="{% url 'presence:liste_agents' %}" class="block py-2 px-4 hover:bg-blue-600"> Liste des agents</a>
-                    <a href="{% url 'admin:index' %}" class="block py-2 px-4 hover:bg-blue-600">Administration</a>
+                    {% if request.user|has_group:"Administrateur" or request.user|has_group:"Agent RH" %}
+                        <a href="{% url 'presence:gestion_presences' %}" class="block py-2 px-4 hover:bg-blue-600"> Gérer les présences</a>
+                        <a href="{% url 'presence:generer_rapport' %}" class="block py-2 px-4 hover:bg-blue-600">Générer rapport</a>
+                    {% endif %}
+
+                    {% if request.user|has_group:"Administrateur" %}
+                        <a href="{% url 'presence:liste_agents' %}" class="block py-2 px-4 hover:bg-blue-600"> Liste des agents</a>
+                        <a href="{% url 'admin:index' %}" class="block py-2 px-4 hover:bg-blue-600">Administration</a>
+                    {% endif %}
                 </div>
             </div>
             <a href="{% url 'accounts:logout' %}" class="block py-2 hover:bg-blue-700 px-2 rounded">Déconnexion</a>

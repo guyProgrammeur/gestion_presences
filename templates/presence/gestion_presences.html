@@ -34,47 +34,56 @@
     </form>
 
     <!-- Tableau des présences -->
-    <div class="overflow-x-auto">
-        <table class="min-w-full bg-white rounded-lg shadow">
-            <thead>
-                <tr class="bg-blue-50">
-                    <th class="py-3 px-4 text-left text-xs font-semibold text-blue-800 uppercase">N°</th>
-                    <th class="py-3 px-4 text-left text-xs font-semibold text-blue-800 uppercase">Agent</th>
-                    <th class="py-3 px-4 text-left text-xs font-semibold text-blue-800 uppercase">Statut</th>
-                    <th class="py-3 px-4 text-left text-xs font-semibold text-blue-800 uppercase">Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for agent in page_obj %}
-                    {% with p=presences_map|get_item:agent.id %}
-                    <tr class="hover:bg-blue-50 transition">
-                        <td class="py-2 px-4">{{ forloop.counter0|add:page_obj.start_index|add:"-1" }}</td>
-                        <td class="py-2 px-4 font-semibold">{{ agent.nom_complet }}</td>
-                        <td class="py-2 px-4">
-                            {% if not p %}
-                                <span class="inline-block bg-red-500 text-white px-3 py-1 rounded-full">Absent</span>
-                            {% elif p.statut == 'P' %}
-                                <span class="inline-block bg-green-500 text-white px-3 py-1 rounded-full">Présent</span>
-                            {% elif p.statut == 'L' %}
-                                <span class="inline-block bg-yellow-500 text-white px-3 py-1 rounded-full">Retard</span>
-                            {% else %}
-                                {{ p|call_attr:"get_statut_display" }}
-                            {% endif %}
-                        </td>
-                        <td class="py-2 px-4">
-                            <form method="post" class="flex gap-2">
-                                {% csrf_token %}
-                                <input type="hidden" name="agent_id" value="{{ agent.id }}">
-                                <button name="statut" value="P" class="bg-green-600 hover:bg-green-800 text-white px-3 py-1 rounded transition">Présent</button>
-                                <button name="statut" value="A" class="bg-red-600 hover:bg-red-800 text-white px-3 py-1 rounded transition">Absent</button>
-                            </form>
-                        </td>
-                    </tr>
-                    {% endwith %}
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
+    <div class="overflow-x-auto rounded-lg shadow-sm">
+    <table class="min-w-full bg-white text-sm">
+        <thead class="bg-gray-50 border-b border-gray-200 text-gray-600 uppercase tracking-wider">
+            <tr>
+                <th scope="col" class="py-3 px-4 text-left font-medium">N°</th>
+                <th scope="col" class="py-3 px-4 text-left font-medium">Agent</th>
+                <th scope="col" class="py-3 px-4 text-left font-medium">Statut</th>
+                <th scope="col" class="py-3 px-4 text-left font-medium">Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for agent in page_obj %}
+            {% with p=presences_map|get_item:agent.id %}
+            <tr class="hover:bg-gray-50 transition-colors duration-200 ease-in-out border-b border-gray-100 last:border-b-0">
+                <td class="py-3 px-4 text-gray-500">{{ forloop.counter0|add:page_obj.start_index|add:"-1" }}</td>
+                <td class="py-3 px-4 font-medium text-gray-800">{{ agent.nom_complet }}</td>
+                <td class="py-3 px-4">
+                    {% if not p %}
+                    <span class="inline-flex items-center gap-1.5 rounded-full bg-red-100 px-2.5 py-1 text-xs font-semibold text-red-700">
+                        <svg class="h-2 w-2 fill-current" viewBox="0 0 8 8"><circle cx="4" cy="4" r="3" /></svg>
+                        Absent
+                    </span>
+                    {% elif p.statut == 'P' %}
+                    <span class="inline-flex items-center gap-1.5 rounded-full bg-green-100 px-2.5 py-1 text-xs font-semibold text-green-700">
+                        <svg class="h-2 w-2 fill-current" viewBox="0 0 8 8"><circle cx="4" cy="4" r="3" /></svg>
+                        Présent
+                    </span>
+                    {% elif p.statut == 'L' %}
+                    <span class="inline-flex items-center gap-1.5 rounded-full bg-yellow-100 px-2.5 py-1 text-xs font-semibold text-yellow-700">
+                        <svg class="h-2 w-2 fill-current" viewBox="0 0 8 8"><circle cx="4" cy="4" r="3" /></svg>
+                        Retard
+                    </span>
+                    {% else %}
+                    <span class="text-gray-500">{{ p|call_attr:"get_statut_display" }}</span>
+                    {% endif %}
+                </td>
+                <td class="py-3 px-4">
+                    <form method="post" class="flex items-center space-x-2">
+                        {% csrf_token %}
+                        <input type="hidden" name="agent_id" value="{{ agent.id }}">
+                        <button name="statut" value="P" class="inline-flex items-center rounded-md border border-transparent bg-green-500 px-2 py-1 text-xs font-medium text-white shadow-sm transition-colors duration-200 hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">Présent</button>
+                        <button name="statut" value="A" class="inline-flex items-center rounded-md border border-transparent bg-red-500 px-2 py-1 text-xs font-medium text-white shadow-sm transition-colors duration-200 hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">Absent</button>
+                    </form>
+                </td>
+            </tr>
+            {% endwith %}
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
 
     <!-- Pagination (si besoin) -->
     <div class="flex items-center justify-between mt-6">

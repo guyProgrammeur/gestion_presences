@@ -19,7 +19,11 @@ GESP/
 .env
 *.pyc
 *.pyo
-
+# Ignorer les fichiers de configuration
+*.cfg
+# Ignorer les fichiers de cache
+*.cache
+create_users.py
 # Ignorer les fichiers de config système
 .DS_Store
 Thumbs.db

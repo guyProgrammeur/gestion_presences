@@ -1,7 +1,8 @@
 from pyexpat.errors import messages
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse, HttpResponse
+from django.http import JsonResponse, HttpResponse,HttpResponseForbidden
+
 from django.utils import timezone
 from django.db.models import Q
 from django.core.paginator import Paginator
@@ -648,7 +649,12 @@ from datetime import datetime
 @login_required
 def details_agent(request, agent_id):
     agent = get_object_or_404(Agent.objects.select_related('bureau__division'), pk=agent_id)
-
+    
+    # Si l'utilisateur est un employé, il ne peut voir que son propre profil
+    if request.user.groups.filter(name='Employé').exists():
+        if agent.user != request.user:
+            return HttpResponseForbidden("Accès refusé")
+        
     date_query = request.GET.get('date', '')
     presences_qs = Presence.objects.filter(agent=agent).order_by('-date')
 

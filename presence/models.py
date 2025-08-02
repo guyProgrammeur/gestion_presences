@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 from django.db import models
 from django.db.models import Q, Count
 from django.conf import settings
+from django.contrib.auth.models import User
 
 class Institution(models.Model):
     nom = models.CharField(max_length=200)
@@ -70,6 +71,7 @@ class Agent(models.Model):
     prenom = models.CharField(max_length=100)
     grade = models.CharField(max_length=100)
     sexe = models.CharField(max_length=1, choices=SEXE_CHOIX)
+    user = models.OneToOneField(User, null=True, blank=True, on_delete=models.SET_NULL, related_name='agent_profile')
 
     bureau = models.ForeignKey(Bureau, null=True, blank=True, on_delete=models.PROTECT, related_name='agents')
     division = models.ForeignKey(Division, null=True, blank=True, on_delete=models.PROTECT, related_name='agents_sans_bureau')
@@ -125,6 +127,7 @@ class Agent(models.Model):
         verbose_name_plural = "AGENTS"
 
 class Presence(models.Model):
+     
     TYPE_TRAVAIL_CHOIX = [
         ('P', 'Présentiel'),
         ('D', 'Demi-journée'),
@@ -147,13 +150,19 @@ class Presence(models.Model):
     justification = models.FileField(upload_to='justifications/', null=True, blank=True)
     remarques = models.TextField(blank=True)
     enregistre_par = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)
-
+ 
     class Meta:
+        permissions = [
+            ("can_manage_presence", "Peut gérer les présences"),
+            ("can_export_rapport", "Peut exporter les rapports"),
+            ("can_view_own_presence", "Peut voir ses propres présences"),
+        ]
         unique_together = ('agent', 'date')
         indexes = [
             models.Index(fields=['date']),
             models.Index(fields=['agent', 'date']),
         ]
+       
 
     def __str__(self):
         return f"{self.agent.nom_complet} - {self.date}"
