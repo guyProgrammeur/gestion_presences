@@ -14,6 +14,7 @@ from .forms import RapportForm
 
 import datetime
 from weasyprint import HTML, CSS
+from django.db.models import Prefetch
 
 @login_required
 def dashboard(request):
@@ -85,8 +86,9 @@ def gestion_presences(request):
     
     divisions = Division.objects.all()
     bureaux = Bureau.objects.select_related('division').all()
-    agents_query = agents_query.order_by('bureau__division__ordre', 'nom', 'postnom', 'prenom')
-
+    agents_query = agents_query.order_by('bureau__division__ordre', 'idgrade__ordre')
+    #agents_query = agents_query.order_by('bureau__division__ordre',)
+    
     paginator = Paginator(agents_query, 20)  # 20 agents par page
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
@@ -124,8 +126,42 @@ def liste_agents(request):
     bureau_id = request.GET.get('bureau')
     division_id = request.GET.get('division')
     
-    agents = Agent.objects.select_related('bureau', 'division', 'direction').order_by('bureau__division__ordre','nom', 'postnom','prenom')
+    #agents = Agent.objects.select_related('bureau', 'division', 'direction','idgrade').order_by( 'bureau__division__ordre', 'idgrade__ordre',  )
+    agents = Agent.objects.select_related(
+        'bureau__division__direction',
+        'idgrade'
+    ).order_by(
+        'bureau__division__direction__ordre',
+        'bureau__division__ordre',
+        'idgrade__ordre'
+    )
+    agents_structures = []
+    agents_ids = set()
 
+    def ajouter_agent(agent):
+        if agent and agent.id not in agents_ids:
+            agents_structures.append(agent)
+            agents_ids.add(agent.id)
+
+    for direction in Direction.objects.select_related('chef').prefetch_related( Prefetch('divisions', queryset=Division.objects.select_related('chef').order_by('ordre'))):
+        ajouter_agent(direction.chef)
+
+        for division in direction.divisions.all():
+            ajouter_agent(division.chef)
+
+            for bureau in division.bureaux.select_related('chef').all():
+                ajouter_agent(bureau.chef)
+
+                membres = bureau.agents.exclude(id=bureau.chef_id).select_related('idgrade').order_by('idgrade__ordre', 'nom')
+                for agent in membres:
+                    ajouter_agent(agent)
+
+    agents_sans_bureau = Agent.objects.filter(bureau__isnull=True).exclude(id__in=agents_ids).select_related('idgrade').order_by('idgrade__ordre', 'nom')
+    agents_structures.extend(agents_sans_bureau)
+
+    #agents = agents_structures
+    agent_ids = [agent.id for agent in agents_structures]
+    agents = Agent.objects.filter(id__in=agent_ids).select_related('idgrade')
     if search_query:
         agents = agents.filter(
             Q(nom__icontains=search_query) |
@@ -178,7 +214,6 @@ def update_presence_ajax(request):
                 date=date_selectionnee,
                 defaults={'statut': statut, 'enregistre_par': request.user}
             )
-
             # Optionnel : renvoyer HTML mis à jour ou juste un statut
             return JsonResponse({'success': True, 'statut': statut})
         except Exception as e:
@@ -424,7 +459,7 @@ def generer_pdf_rapport(mois, annee):
         'presence_set'
     ).order_by(
         'bureau__division__ordre',        # ou direction__ordre si nécessaire
-        'nom', 'postnom', 'prenom'
+         'idgrade__ordre',
     )
 
     # Préparation des données pour le template
@@ -639,8 +674,6 @@ def generer_pdf_rapport_paysage(mois, annee):
     response = HttpResponse(pdf, content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="rapport_presences_paysage_{mois}_{annee}.pdf"'
     return response
-
-
 
 
 from django.shortcuts import get_object_or_404

@@ -2,10 +2,15 @@ from django.contrib import admin
 from django.utils.html import format_html
 from .models import (
     Institution, Direction, Division, Bureau,
-    Agent, Presence,JourOuvrable, JourFerie
+    Agent, Presence,JourOuvrable, Grade,JourFerie
 )
 
-
+@admin.register(Grade)
+class GradeAdmin(admin.ModelAdmin):
+    list_display = ('nom', 'ordre')
+    search_fields = ('nom',)
+    ordering = ('ordre',)
+    
 
 @admin.register(Institution)
 class InstitutionAdmin(admin.ModelAdmin):

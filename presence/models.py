@@ -20,7 +20,7 @@ class Direction(models.Model):
     nom = models.CharField(max_length=100)
     abrege = models.CharField(max_length=20)
     chef = models.ForeignKey('Agent', null=True, blank=True, on_delete=models.SET_NULL, related_name='direction_dirigee')
-
+    ordre = models.PositiveIntegerField(default=0)
     def __str__(self):
         return self.nom
 
@@ -46,7 +46,8 @@ class Bureau(models.Model):
     division = models.ForeignKey(Division, on_delete=models.CASCADE, related_name='bureaux')
     direction = models.ForeignKey(Direction, null=True, blank=True, on_delete=models.SET_NULL, related_name='bureaux_directs')
     chef = models.ForeignKey('Agent', null=True, blank=True, on_delete=models.SET_NULL, related_name='bureau_dirigee')
-
+    ordre = models.PositiveIntegerField(default=0, help_text="Ordre d'affichage du bureau")
+    
     def __str__(self):
         return self.nom
     
@@ -61,6 +62,17 @@ class Bureau(models.Model):
 #     def __str__(self):
 #         return f"Divisions / Bureaux: {self.nom}"
 
+class Grade(models.Model):
+    nom = models.CharField(max_length=100)
+    abrege = models.CharField(max_length=20)
+    description = models.TextField(blank=True, null=True)
+    ordre = models.PositiveIntegerField(default=0, help_text="Ordre d'affichage du grade")
+    def __str__(self):
+        return self.nom
+    class Meta:
+        verbose_name = "GRADE"
+        verbose_name_plural = "GRADES"
+        ordering = ['ordre', 'nom']
 
 class Agent(models.Model):
     SEXE_CHOIX = [('M', 'Masculin'), ('F', 'Féminin')]
@@ -72,7 +84,9 @@ class Agent(models.Model):
     grade = models.CharField(max_length=100)
     sexe = models.CharField(max_length=1, choices=SEXE_CHOIX)
     user = models.OneToOneField(User, null=True, blank=True, on_delete=models.SET_NULL, related_name='agent_profile')
-
+    
+    idgrade = models.ForeignKey(Grade, on_delete=models.PROTECT, related_name='agents', null=True, blank=True)
+    
     bureau = models.ForeignKey(Bureau, null=True, blank=True, on_delete=models.PROTECT, related_name='agents')
     division = models.ForeignKey(Division, null=True, blank=True, on_delete=models.PROTECT, related_name='agents_sans_bureau')
     direction = models.ForeignKey(Direction, null=True, blank=True, on_delete=models.PROTECT, related_name='agents_sans_division')
@@ -110,8 +124,8 @@ class Agent(models.Model):
             return f"{self.division.nom}"
         elif self.direction:
             return f"{self.direction.nom}"
-        return "Aucun rattachement"
-    
+        return "AR"
+   
     @property
     def rattachement_abrege(self):
         if self.bureau and self.bureau.division:
@@ -125,6 +139,7 @@ class Agent(models.Model):
     class Meta:
         verbose_name = "AGENT"
         verbose_name_plural = "AGENTS"
+
 
 class Presence(models.Model):
      

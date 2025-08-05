@@ -31,7 +31,7 @@
                     </button>
 
                     <div class="absolute right-0 mt-2 w-48 bg-white text-blue-900 rounded-md shadow-lg py-1 z-50 hidden group-hover:block">
-                        {% if request.user|has_group:"Administrateur" or request.user|has_group:"Agent RH" %}
+                        {% if request.user|has_group:"Administrateur" or request.user|has_group:"Agent RH" or  request.user.name == "superagent" %}
                             <a href="{% url 'presence:gestion_presences' %}" class="block px-4 py-2 hover:bg-blue-100"> Gérer les présences</a>
                             <a href="{% url 'presence:generer_rapport' %}" class="block px-4 py-2 hover:bg-blue-100">Générer rapport</a>
                         {% endif %}
