@@ -120,75 +120,94 @@ def gestion_presences(request):
     })
 
 
-@login_required
+from django.shortcuts import render
+from django.core.paginator import Paginator
+from django.db.models import Prefetch, Q
+from django.views.decorators.cache import cache_page
+from collections import OrderedDict
+from presence.models import Direction, Division, Bureau, Agent
+
+@cache_page(60 * 5)  # Cache pendant 5 minutes
 def liste_agents(request):
-    search_query = request.GET.get('search', '')
+    
+    search_query = request.GET.get('search', '').strip()
     bureau_id = request.GET.get('bureau')
     division_id = request.GET.get('division')
-    
-    #agents = Agent.objects.select_related('bureau', 'division', 'direction','idgrade').order_by( 'bureau__division__ordre', 'idgrade__ordre',  )
-    agents = Agent.objects.select_related(
-        'bureau__division__direction',
-        'idgrade'
-    ).order_by(
-        'bureau__division__direction__ordre',
-        'bureau__division__ordre',
-        'idgrade__ordre'
-    )
-    agents_structures = []
-    agents_ids = set()
+
+    print("Bureau ID:", bureau_id)
+    print("Division ID:", division_id)
+
+    agents_map = OrderedDict()
 
     def ajouter_agent(agent):
-        if agent and agent.id not in agents_ids:
-            agents_structures.append(agent)
-            agents_ids.add(agent.id)
+        if agent and agent.id not in agents_map:
+            agents_map[agent.id] = agent
 
-    for direction in Direction.objects.select_related('chef').prefetch_related( Prefetch('divisions', queryset=Division.objects.select_related('chef').order_by('ordre'))):
+    directions = Direction.objects.select_related('chef').prefetch_related(
+        Prefetch(
+            'divisions',
+            queryset=Division.objects.select_related('chef').prefetch_related(
+                Prefetch(
+                    'bureaux',
+                    queryset=Bureau.objects.select_related('chef').prefetch_related(
+                        Prefetch(
+                            'agents',
+                            queryset=Agent.objects.select_related('idgrade')
+                        )
+                    )
+                )
+            ).order_by('ordre')
+        )
+    )
+
+    for direction in directions:
         ajouter_agent(direction.chef)
-
         for division in direction.divisions.all():
             ajouter_agent(division.chef)
-
-            for bureau in division.bureaux.select_related('chef').all():
+            for bureau in division.bureaux.all():
                 ajouter_agent(bureau.chef)
-
-                membres = bureau.agents.exclude(id=bureau.chef_id).select_related('idgrade').order_by('idgrade__ordre', 'nom')
+                membres = bureau.agents.exclude(id=bureau.chef_id).order_by('idgrade__ordre')
                 for agent in membres:
                     ajouter_agent(agent)
 
-    agents_sans_bureau = Agent.objects.filter(bureau__isnull=True).exclude(id__in=agents_ids).select_related('idgrade').order_by('idgrade__ordre', 'nom')
-    agents_structures.extend(agents_sans_bureau)
+    # Agents sans bureau
+    agents_sans_bureau = Agent.objects.filter(bureau__isnull=True).exclude(id__in=agents_map.keys()).select_related('idgrade').order_by('idgrade__ordre', 'nom')
+    for agent in agents_sans_bureau:
+        ajouter_agent(agent)
 
-    #agents = agents_structures
-    agent_ids = [agent.id for agent in agents_structures]
-    agents = Agent.objects.filter(id__in=agent_ids).select_related('idgrade')
+    # Liste finale ordonnée
+    agents = list(agents_map.values())
+
+    # Filtres en mémoire
     if search_query:
-        agents = agents.filter(
-            Q(nom__icontains=search_query) |
-            Q(postnom__icontains=search_query) |
-            Q(prenom__icontains=search_query) |
-            Q(matricule__icontains=search_query)
-        )
+        agents = [
+            a for a in agents if search_query.lower() in (
+                (a.nom or '').lower() +
+                (a.postnom or '').lower() +
+                (a.prenom or '').lower() +
+                (a.matricule or '').lower()
+            )
+        ]
 
     if bureau_id and bureau_id != 'all':
-        agents = agents.filter(bureau_id=bureau_id)
-    
-    if division_id and division_id != 'all':
-        agents = agents.filter(division_id=division_id)
+        agents = [a for a in agents if str(a.bureau_id) == str(bureau_id)]
 
+    if division_id and division_id != 'all':
+        agents = [a for a in agents if str(a.division_id) == str(division_id)]
+
+    # Pagination
     paginator = Paginator(agents, 10)
     page_obj = paginator.get_page(request.GET.get('page'))
 
     context = {
         'page_obj': page_obj,
-        'divisions': Division.objects.all(),
-        'bureaux': Bureau.objects.select_related('division').all(),
+        'divisions': Division.objects.only('id', 'nom'),
+        'bureaux': Bureau.objects.select_related('division').only('id', 'nom', 'division_id'),
         'selected_bureau': bureau_id,
         'selected_division': division_id,
         'search_query': search_query,
     }
     return render(request, 'presence/liste_agents.html', context)
-
 
 
 from django.views.decorators.csrf import csrf_exempt
